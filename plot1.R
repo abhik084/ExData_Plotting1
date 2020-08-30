@@ -1,11 +1,32 @@
-PowerCons <- read.table("household_power_consumption.txt",sep = ";",header = TRUE)
-PowerCons$Date <- as.Date(PowerCons$Date,format = "%d/%m/%Y")
-PowerCons$Time <- strptime(PowerCons$Time,format = "%H:%M:%S")
+# Scripts for Getting and Cleaning Data course project
 
-Data<- subset(PowerCons, ((Date == as.Date("2007-02-01")) | (Date == as.Date("2007-02-02"))) )
+##loading libraries
 
-Data$Global_active_power <- as.numeric(Data$Global_active_power)
-hist(Data$Global_active_power,col="red",main="Global Active Power",xlab="Global Active Power(kilowatts")
+library(dplyr)
+library(stringr)
+library(reshape2)
+library(chron)
+library(data.table)
+##-----------------------------------FILE PREPARATION------------------------------------
 
-dev.copy(png, 'plot1.png',height = 480, width = 480)
-dev.off
+##!!!!!!!!!!!!!!!!must enter the path for the directory with unzipped data files!!!!!!!!!
+
+## Directory path for data files
+DirPath <- '<your path to the file (including the file & extension)>' 
+
+
+##--------------------------READING AND CONVERTING DATA----------------------------------
+## Reading household power consumption (HPC) file
+HPC_data <- read.table(file = DirPath, sep = ';', header = TRUE)
+## Converting Date and Time columns
+HPC_data$Date <- as.Date.character(HPC_data$Date, '%d/%m/%Y')
+HPC_data$Time <- times(HPC_data$Time)
+## Subsetting values for 2007-02-01 and 2007-02-02
+HPC_dt <- subset(HPC_data, Date == '2007-02-01'| Date == '2007-02-02')
+## Converting numeric columns
+HPC_dt[, 3:9] <- sapply(HPC_dt[, 3:9], as.numeric)
+
+##-----------------------------------PLOTTING-------------------------------------------
+png("plot1.png", width=480, height=480)
+hist(HPC_dt$Global_active_power, col = 'red', main = 'Global Active Power', xlab = 'Global Active Power (kilowatts)')
+dev.off()
