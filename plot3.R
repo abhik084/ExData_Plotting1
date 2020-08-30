@@ -1,18 +1,38 @@
-PowerCons <- read.table("household_power_consumption.txt",sep = ";",header = TRUE)
+# Scripts for Getting and Cleaning Data course project
 
-PowerCons$DateTime <- as.POSIXct(paste(PowerCons$Date, PowerCons$Time),format = "%d/%m/%Y %H:%M:%S")
-PowerCons$Date <- as.Date(PowerCons$Date, format = "%d/%m/%Y")
-Data<- subset(PowerCons, ((Date == as.Date("2007-02-01")) | (Date == as.Date("2007-02-02"))) )
+##loading libraries
 
-Data$Sub_metering_1 <- as.numeric(Data$Sub_metering_1)
-Data$Sub_metering_2 <- as.numeric(Data$Sub_metering_2)
-Data$Sub_metering_3 <- as.numeric(Data$Sub_metering_3)
+library(dplyr)
+library(stringr)
+library(reshape2)
+library(chron)
+library(data.table)
+##-----------------------------------FILE PREPARATION------------------------------------
 
-with(Data, plot(DateTime, Sub_metering_1, type = "n", ylab = "Energy sub metering", xlab = "" ))
-with(Data, points(DateTime, Sub_metering_1, type = "l"))
-with(Data, points(DateTime, Sub_metering_2, type = "l", col = "red"))
-with(Data, points(DateTime, Sub_metering_3, type = "l", col = "blue"))
-legend("topright",pch="-", legend = c("Sub_metering_1","Sub_metering_2","Sub_metering_3"), col = c("black","red","blue"))
+##!!!!!!!!!!!!!!!!must enter the path for the directory with unzipped data files!!!!!!!!!
 
-dev.copy(png, 'plot3.png',height = 480, width = 480)
-dev.off
+## Directory path for data files
+DirPath <- '<your path to the file (including the file & extension)>' 
+
+
+##--------------------------READING AND CONVERTING DATA----------------------------------
+## Reading household power consumption (HPC) file
+HPC_data <- read.table(file = DirPath, sep = ';', header = TRUE)
+## Converting Date and Time columns
+HPC_data$Date <- as.Date.character(HPC_data$Date, '%d/%m/%Y')
+HPC_data$Time <- times(HPC_data$Time)
+## Subsetting values for 2007-02-01 and 2007-02-02
+HPC_dt <- subset(HPC_data, Date == '2007-02-01'| Date == '2007-02-02')
+## Converting numeric columns
+HPC_dt[, 3:9] <- sapply(HPC_dt[, 3:9], as.numeric)
+## Creating Date + Time column
+Date_Time <- strptime(paste(HPC_dt$Date, HPC_dt$Time, sep=" "), '%Y-%m-%d %H:%M:%S')
+HPC_dt <- cbind(HPC_dt, Date_Time)
+
+##-----------------------------------PLOTTING-------------------------------------------
+png("plot3.png", width=480, height=480)
+with(HPC_dt, plot(Date_Time, Sub_metering_1, type = 'l', xlab = 'Day', ylab="Energy sub metering"))
+lines(HPC_dt$Date_Time, HPC_dt$Sub_metering_2, type = 'l', col= 'red')
+lines(HPC_dt$Date_Time, HPC_dt$Sub_metering_3, type = 'l', col= 'blue')
+legend('topright', c("Sub_metering_1", "Sub_metering_2", "Sub_metering_3"), lty = 1, lwd = 2, col = c('black', 'red', 'blue'))
+dev.off()
